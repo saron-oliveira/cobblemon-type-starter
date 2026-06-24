@@ -1,0 +1,11 @@
+COLOQUE AQUI O ARQUIVO .jar DO COBBLEMON 1.7.3
+
+1. Baixe o Cobblemon 1.7.3 para Fabric 1.21.1 em:
+   https://modrinth.com/mod/cobblemon/versions
+
+2. O arquivo se chama algo como:
+   Cobblemon-fabric-1.7.3+1.21.1.jar
+
+3. Coloque esse .jar NESTA PASTA (libs/)
+
+4. Volte ao IntelliJ e rode o build novamente
