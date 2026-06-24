@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom' version '1.11-SNAPSHOT'
+    id 'fabric-loom' version '1.8-SNAPSHOT'
     id 'maven-publish'
 }
 
@@ -14,6 +14,14 @@ repositories {
         name = 'Fabric'
         url = 'https://maven.fabricmc.net/'
     }
+    maven {
+        name = 'ImpactDev'
+        url = 'https://maven.impactdev.net/repository/development/'
+    }
+    maven {
+        name = "Modrinth"
+        url = "https://api.modrinth.com/maven"
+    }
     mavenLocal()
     mavenCentral()
 }
@@ -24,6 +32,7 @@ dependencies {
     modImplementation 'net.fabricmc:fabric-loader:0.16.5'
     modImplementation 'net.fabricmc.fabric-api:fabric-api:0.102.0+1.21.1'
     modImplementation 'com.cobblemon:fabric:1.7.3+1.21.1'
+    compileOnly 'org.jetbrains.kotlin:kotlin-stdlib:2.0.20'
 }
 
 java {

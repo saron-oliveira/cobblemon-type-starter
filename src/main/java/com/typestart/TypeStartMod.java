@@ -18,6 +18,7 @@ public class TypeStartMod implements ModInitializer {
         LOGGER.info("Cobblemon Type Starter carregado!");
 
         // Registra os pacotes de rede (comunicacao cliente-servidor)
+        TypeStartNetwork.registerPayloads();
         TypeStartNetwork.registerServerPackets();
 
         // Registra os comandos admin

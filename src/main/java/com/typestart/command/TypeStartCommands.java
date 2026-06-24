@@ -120,7 +120,7 @@ public class TypeStartCommands {
                         // Reseta e reabre
                         TypeDataManager.resetPlayer(target.getUuidAsString());
                         TypeDataManager.save(server);
-                        ServerPlayNetworking.send(target, TypeStartNetwork.OPEN_TYPE_SCREEN, PacketByteBufs.create());
+                        ServerPlayNetworking.send(target, new TypeStartNetwork.OpenTypeScreenPayload());
 
                         ctx.getSource().sendFeedback(
                             () -> Text.literal("§aTela de escolha reaberta para " + nome + "."), true

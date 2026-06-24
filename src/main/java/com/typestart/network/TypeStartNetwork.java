@@ -1,6 +1,5 @@
 package com.typestart.network;
 
-import com.cobblemon.mod.common.CobblemonEntities;
 import com.cobblemon.mod.common.api.pokemon.PokemonSpecies;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.typestart.TypeStartMod;
@@ -8,103 +7,96 @@ import com.typestart.data.StarterTypes;
 import com.typestart.data.TypeDataManager;
 import com.typestart.screen.TypeSelectScreen;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.network.PacketByteBuf;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.codec.PacketCodec;
+import net.minecraft.network.codec.PacketCodecs;
+import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
 import java.util.List;
+import java.util.UUID;
 
 public class TypeStartNetwork {
 
-    // Pacote: servidor manda para cliente abrir a tela de escolha de tipo
-    public static final Identifier OPEN_TYPE_SCREEN = new Identifier(TypeStartMod.MOD_ID, "open_type_screen");
+    public record OpenTypeScreenPayload() implements CustomPayload {
+        public static final Id<OpenTypeScreenPayload> ID = new Id<>(Identifier.of(TypeStartMod.MOD_ID, "open_type_screen"));
+        public static final PacketCodec<RegistryByteBuf, OpenTypeScreenPayload> CODEC = PacketCodec.unit(new OpenTypeScreenPayload());
+        @Override public Id<? extends CustomPayload> getId() { return ID; }
+    }
 
-    // Pacote: cliente manda para servidor informando o tipo escolhido
-    public static final Identifier TYPE_CHOSEN = new Identifier(TypeStartMod.MOD_ID, "type_chosen");
+    public record TypeChosenPayload(String type) implements CustomPayload {
+        public static final Id<TypeChosenPayload> ID = new Id<>(Identifier.of(TypeStartMod.MOD_ID, "type_chosen"));
+        public static final PacketCodec<RegistryByteBuf, TypeChosenPayload> CODEC = PacketCodec.tuple(PacketCodecs.STRING, TypeChosenPayload::type, TypeChosenPayload::new);
+        @Override public Id<? extends CustomPayload> getId() { return ID; }
+    }
 
-    // Pacote: cliente manda para servidor informando o Pokemon escolhido
-    public static final Identifier POKEMON_CHOSEN = new Identifier(TypeStartMod.MOD_ID, "pokemon_chosen");
+    public record PokemonChosenPayload(String type, String pokemon) implements CustomPayload {
+        public static final Id<PokemonChosenPayload> ID = new Id<>(Identifier.of(TypeStartMod.MOD_ID, "pokemon_chosen"));
+        public static final PacketCodec<RegistryByteBuf, PokemonChosenPayload> CODEC = PacketCodec.tuple(PacketCodecs.STRING, PokemonChosenPayload::type, PacketCodecs.STRING, PokemonChosenPayload::pokemon, PokemonChosenPayload::new);
+        @Override public Id<? extends CustomPayload> getId() { return ID; }
+    }
 
-    // Pacote: servidor confirma escolha e fecha tela
-    public static final Identifier CHOICE_RESULT = new Identifier(TypeStartMod.MOD_ID, "choice_result");
+    public record ChoiceResultPayload(boolean success, String data1, String data2) implements CustomPayload {
+        public static final Id<ChoiceResultPayload> ID = new Id<>(Identifier.of(TypeStartMod.MOD_ID, "choice_result"));
+        public static final PacketCodec<RegistryByteBuf, ChoiceResultPayload> CODEC = PacketCodec.tuple(PacketCodecs.BOOL, ChoiceResultPayload::success, PacketCodecs.STRING, ChoiceResultPayload::data1, PacketCodecs.STRING, ChoiceResultPayload::data2, ChoiceResultPayload::new);
+        @Override public Id<? extends CustomPayload> getId() { return ID; }
+    }
+
+    public static void registerPayloads() {
+        PayloadTypeRegistry.playS2C().register(OpenTypeScreenPayload.ID, OpenTypeScreenPayload.CODEC);
+        PayloadTypeRegistry.playC2S().register(TypeChosenPayload.ID, TypeChosenPayload.CODEC);
+        PayloadTypeRegistry.playC2S().register(PokemonChosenPayload.ID, PokemonChosenPayload.CODEC);
+        PayloadTypeRegistry.playS2C().register(ChoiceResultPayload.ID, ChoiceResultPayload.CODEC);
+    }
 
     public static void registerServerPackets() {
-
-        // Quando jogador entra no servidor, verifica se precisa escolher tipo
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             ServerPlayerEntity player = handler.player;
-            String uuid = player.getUuidAsString();
-
-            if (!TypeDataManager.hasChosen(uuid)) {
-                // Manda pacote para abrir a tela no cliente
-                server.execute(() -> {
-                    PacketByteBuf buf = PacketByteBufs.create();
-                    ServerPlayNetworking.send(player, OPEN_TYPE_SCREEN, buf);
-                });
+            if (!TypeDataManager.hasChosen(player.getUuidAsString())) {
+                ServerPlayNetworking.send(player, new OpenTypeScreenPayload());
             }
         });
 
-        // Recebe a escolha de tipo do cliente
-        ServerPlayNetworking.registerGlobalReceiver(TYPE_CHOSEN, (server, player, handler, buf, responseSender) -> {
-            String chosenType = buf.readString();
-            String uuid = player.getUuidAsString();
-
-            server.execute(() -> {
-                PacketByteBuf response = PacketByteBufs.create();
-
-                // Verifica se o tipo já foi pego
+        ServerPlayNetworking.registerGlobalReceiver(TypeChosenPayload.ID, (payload, context) -> {
+            String chosenType = payload.type();
+            ServerPlayerEntity player = context.player();
+            context.server().execute(() -> {
                 if (TypeDataManager.isTypeTaken(chosenType)) {
                     String ownerUuid = TypeDataManager.getTypeOwner(chosenType);
                     String ownerName = "outro jogador";
-                    var ownerPlayer = server.getPlayerManager().getPlayer(java.util.UUID.fromString(ownerUuid));
+                    var ownerPlayer = context.server().getPlayerManager().getPlayer(UUID.fromString(ownerUuid));
                     if (ownerPlayer != null) ownerName = ownerPlayer.getName().getString();
-
-                    response.writeBoolean(false); // falhou
-                    response.writeString("O tipo " + StarterTypes.TYPE_DISPLAY_NAMES.get(chosenType)
-                            + " ja foi escolhido por " + ownerName + "!");
-                    ServerPlayNetworking.send(player, CHOICE_RESULT, response);
+                    String msg = "O tipo " + StarterTypes.TYPE_DISPLAY_NAMES.get(chosenType) + " ja foi escolhido por " + ownerName + "!";
+                    ServerPlayNetworking.send(player, new ChoiceResultPayload(false, msg, ""));
                     return;
                 }
-
-                // Tipo disponivel — manda a lista de pokemons desse tipo para o cliente escolher
-                response.writeBoolean(true); // sucesso
-                response.writeString(chosenType);
                 List<String> pokemons = StarterTypes.TYPE_STARTERS.get(chosenType);
-                response.writeInt(pokemons.size());
-                for (String poke : pokemons) response.writeString(poke);
-
-                ServerPlayNetworking.send(player, CHOICE_RESULT, response);
+                String pokes = String.join(",", pokemons);
+                ServerPlayNetworking.send(player, new ChoiceResultPayload(true, chosenType, pokes));
             });
         });
 
-        // Recebe o Pokemon escolhido pelo cliente
-        ServerPlayNetworking.registerGlobalReceiver(POKEMON_CHOSEN, (server, player, handler, buf, responseSender) -> {
-            String chosenType    = buf.readString();
-            String chosenPokemon = buf.readString();
-            String uuid = player.getUuidAsString();
-
-            server.execute(() -> {
-                // Ultima verificacao de seguranca: tipo ainda disponivel?
-                if (TypeDataManager.isTypeTaken(chosenType) && !TypeDataManager.getTypeOwner(chosenType).equals(uuid)) {
+        ServerPlayNetworking.registerGlobalReceiver(PokemonChosenPayload.ID, (payload, context) -> {
+            String chosenType = payload.type();
+            String chosenPokemon = payload.pokemon();
+            ServerPlayerEntity player = context.player();
+            context.server().execute(() -> {
+                if (TypeDataManager.isTypeTaken(chosenType) && !TypeDataManager.getTypeOwner(chosenType).equals(player.getUuidAsString())) {
                     player.sendMessage(Text.literal("§cErro: o tipo ja foi pego enquanto voce escolhia!"), false);
-                    // Reabre a tela de tipo
-                    PacketByteBuf buf2 = PacketByteBufs.create();
-                    ServerPlayNetworking.send(player, OPEN_TYPE_SCREEN, buf2);
+                    ServerPlayNetworking.send(player, new OpenTypeScreenPayload());
                     return;
                 }
+                TypeDataManager.registerChoice(player.getUuidAsString(), chosenType);
+                TypeDataManager.save(context.server());
 
-                // Registra a escolha
-                TypeDataManager.registerChoice(uuid, chosenType);
-                TypeDataManager.save(server);
-
-                // Entrega o Pokemon via API do Cobblemon
-                var species = PokemonSpecies.INSTANCE.getByName(chosenPokemon);
+                var species = PokemonSpecies.INSTANCE.getByName(chosenPokemon.toLowerCase());
                 if (species != null) {
-                    Pokemon pokemon = species.create(5); // nivel 5
+                    Pokemon pokemon = species.create(5);
                     com.cobblemon.mod.common.api.storage.party.PlayerPartyStore party =
                         com.cobblemon.mod.common.Cobblemon.INSTANCE.getStorage().getParty(player);
                     party.add(pokemon);
@@ -117,33 +109,17 @@ public class TypeStartNetwork {
     }
 
     public static void registerClientPackets() {
-
-        // Recebe ordem do servidor para abrir a tela de tipo
-        ClientPlayNetworking.registerGlobalReceiver(OPEN_TYPE_SCREEN, (client, handler, buf, responseSender) -> {
-            client.execute(() -> {
-                client.setScreen(new TypeSelectScreen(null));
-            });
+        ClientPlayNetworking.registerGlobalReceiver(OpenTypeScreenPayload.ID, (payload, context) -> {
+            context.client().execute(() -> context.client().setScreen(new TypeSelectScreen(null)));
         });
 
-        // Recebe resultado da escolha de tipo
-        ClientPlayNetworking.registerGlobalReceiver(CHOICE_RESULT, (client, handler, buf, responseSender) -> {
-            boolean success = buf.readBoolean();
-
-            if (!success) {
-                String errorMsg = buf.readString();
-                client.execute(() -> {
-                    // Mostra erro e reabre tela de tipo
-                    client.setScreen(new TypeSelectScreen(errorMsg));
-                });
+        ClientPlayNetworking.registerGlobalReceiver(ChoiceResultPayload.ID, (payload, context) -> {
+            if (!payload.success()) {
+                context.client().execute(() -> context.client().setScreen(new TypeSelectScreen(payload.data1())));
             } else {
-                String chosenType = buf.readString();
-                int count = buf.readInt();
-                String[] pokemons = new String[count];
-                for (int i = 0; i < count; i++) pokemons[i] = buf.readString();
-
-                client.execute(() -> {
-                    client.setScreen(new com.typestart.screen.PokemonSelectScreen(chosenType, pokemons));
-                });
+                String chosenType = payload.data1();
+                String[] pokemons = payload.data2().split(",");
+                context.client().execute(() -> context.client().setScreen(new com.typestart.screen.PokemonSelectScreen(chosenType, pokemons)));
             }
         });
     }

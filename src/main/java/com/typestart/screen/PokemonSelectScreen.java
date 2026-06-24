@@ -55,10 +55,7 @@ public class PokemonSelectScreen extends Screen {
     }
 
     private void sendPokemonChoice(String pokemon) {
-        PacketByteBuf buf = PacketByteBufs.create();
-        buf.writeString(chosenType);
-        buf.writeString(pokemon);
-        ClientPlayNetworking.send(TypeStartNetwork.POKEMON_CHOSEN, buf);
+        ClientPlayNetworking.send(new TypeStartNetwork.PokemonChosenPayload(chosenType, pokemon));
         this.client.setScreen(null); // fecha a tela
     }
 

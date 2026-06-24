@@ -59,9 +59,7 @@ public class TypeSelectScreen extends Screen {
     }
 
     private void sendTypeChoice(String type) {
-        PacketByteBuf buf = PacketByteBufs.create();
-        buf.writeString(type);
-        ClientPlayNetworking.send(TypeStartNetwork.TYPE_CHOSEN, buf);
+        ClientPlayNetworking.send(new TypeStartNetwork.TypeChosenPayload(type));
     }
 
     @Override
