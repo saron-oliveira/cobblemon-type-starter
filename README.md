@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Cobblemon Type Starter
 
 Mod para Fabric 1.21.1 que adiciona uma tela de escolha de tipo antes da escolha do Pokemon inicial do Cobblemon. Feito para campeonatos onde cada jogador representa um tipo diferente.
@@ -84,9 +83,5 @@ Para fazer backup do campeonato, basta guardar esse arquivo.
 Edite o arquivo:
 `src/main/java/com/typestart/data/StarterTypes.java`
 
-No mapa `TYPE_STARTERS`, cada linha é um tipo com a lista de Pokemon.
+O mapa `TYPE_STARTERS`, cada linha é um tipo com a lista de Pokemon.
 Os nomes dos Pokemon devem ser os nomes internos do Cobblemon em minúsculas (ex: `"charizard"`, `"gengar"`).
-=======
-# cobblemon-type-starter
-Mod Fabric 1.21.1 - Escolha de tipo antes do starter do Cobblemon
->>>>>>> 99b3b5c6887dec89c9cf6b95694310a2b625f49b
