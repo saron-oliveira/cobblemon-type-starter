@@ -84,4 +84,21 @@ public class StarterTypes {
         "psychic", "ghost", "dragon",
         "dark", "steel", "fairy"
     );
+
+    /**
+     * Descobre a qual tipo um Pokemon pertence (busca reversa no TYPE_STARTERS).
+     * Usado quando o jogador escolhe pela GUI nativa do Cobblemon, para saber o
+     * tipo a partir da especie escolhida. Retorna null se nao for um dos nossos.
+     */
+    public static String typeForPokemon(String species) {
+        if (species == null) return null;
+        for (Map.Entry<String, List<String>> entry : TYPE_STARTERS.entrySet()) {
+            for (String poke : entry.getValue()) {
+                if (poke.equalsIgnoreCase(species)) {
+                    return entry.getKey();
+                }
+            }
+        }
+        return null;
+    }
 }
