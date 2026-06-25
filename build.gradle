@@ -36,8 +36,11 @@ dependencies {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    // Usa o toolchain do Java 21 para compilar, mesmo que o Java padrao do
+    // sistema seja outro (ex: Java 24). O Gradle baixa/usa o JDK 21 sozinho.
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
     withSourcesJar()
 }
 
