@@ -8,3 +8,8 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
+
+plugins {
+    // Permite que o Gradle baixe o JDK 21 automaticamente caso nao esteja instalado.
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
+}

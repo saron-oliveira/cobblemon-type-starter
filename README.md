@@ -4,6 +4,30 @@ Mod para Fabric 1.21.1 que adiciona uma tela de escolha de tipo antes da escolha
 
 ---
 
+## Requisitos para RODAR (importante!)
+
+Este mod **não funciona sozinho**. Ele precisa do **Fabric Loader** e dos mods abaixo
+instalados juntos, todos para **Minecraft 1.21.1**. Se algum faltar, o Minecraft mostra
+erro de dependência e parece que "o mod não é válido".
+
+Coloque na pasta `mods` (do servidor **e** de cada cliente):
+
+| Mod | Onde baixar |
+|---|---|
+| **Fabric Loader 1.21.1** | https://fabricmc.net/use/installer/ (instale a versão 1.21.1) |
+| **Fabric API** (para 1.21.1) | https://modrinth.com/mod/fabric-api/versions |
+| **Fabric Language Kotlin** | https://modrinth.com/mod/fabric-language-kotlin/versions |
+| **Cobblemon 1.7.3** (Fabric, 1.21.1) | https://modrinth.com/mod/cobblemon/versions |
+| **Cobblemon Type Starter** (este mod) | `build/libs/cobblemon-type-starter-1.0.0.jar` |
+
+> O Cobblemon é escrito em Kotlin, por isso o **Fabric Language Kotlin** é obrigatório —
+> é a causa mais comum de "mod não reconhecido".
+>
+> Use sempre o `.jar` **sem** o `-sources` no nome. O arquivo `-sources.jar` é só o
+> código-fonte e o Minecraft o rejeita como mod inválido.
+
+---
+
 ## Como funciona
 
 1. Quando um jogador entra no servidor pela primeira vez, aparece uma tela com os 18 tipos.
@@ -53,8 +77,12 @@ Mod para Fabric 1.21.1 que adiciona uma tela de escolha de tipo antes da escolha
 ## Como compilar
 
 ### Requisitos
-- Java 21 (JDK)
-- IntelliJ IDEA (recomendado)
+- **JDK 21** instalado (Eclipse Temurin / Adoptium é uma boa opção)
+- IntelliJ IDEA (recomendado, mas não obrigatório)
+
+> O projeto é fixado no **Java 21**. Mesmo que o Java padrão do seu PC seja outro
+> (ex: Java 24), o Gradle seleciona o 21 sozinho (e baixa se não tiver). Não precisa
+> mexer em `JAVA_HOME`.
 
 ### Passos
 
@@ -63,9 +91,10 @@ Mod para Fabric 1.21.1 que adiciona uma tela de escolha de tipo antes da escolha
 3. Aguarde o Gradle baixar as dependências (pode demorar na primeira vez)
 4. Execute o comando Gradle:
    - No IntelliJ: painel Gradle (direita) > Tasks > build > build
-   - Ou no terminal: `./gradlew build`
+   - Ou no terminal: `./gradlew build` (Windows: `gradlew.bat build`)
 5. O arquivo `.jar` estará em `build/libs/cobblemon-type-starter-1.0.0.jar`
-6. Coloque esse `.jar` na pasta `mods` do seu servidor junto com o Cobblemon
+6. Coloque esse `.jar` na pasta `mods` junto com o Cobblemon e as demais dependências
+   (veja a seção **Requisitos para RODAR** no topo)
 
 ---
 
