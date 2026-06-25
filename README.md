@@ -30,11 +30,19 @@ Coloque na pasta `mods` (do servidor **e** de cada cliente):
 
 ## Como funciona
 
-1. Quando um jogador entra no servidor pela primeira vez, aparece uma tela com os 18 tipos.
-2. O jogador escolhe um tipo — se já estiver pego, aparece mensagem de erro e ele deve escolher outro.
-3. Após confirmar o tipo, aparece a tela com o(s) Pokemon disponíveis daquele tipo.
-4. O jogador recebe o Pokemon no nível 5.
+1. Quando um jogador entra pela primeira vez, abre a **tela nativa de iniciais do Cobblemon**
+   (aquela interface bonita), só que com **os nossos 18 tipos** como categorias.
+2. O jogador escolhe um tipo e, dentro dele, um dos Pokemon que listamos.
+3. Se aquele tipo já tiver sido pego por outro jogador, a escolha é recusada com uma mensagem
+   e a tela reabre para ele escolher outro (regra de campeonato: **um tipo por jogador**).
+4. O Cobblemon entrega o Pokemon e marca o inicial como escolhido — então o aviso
+   "Press M to select your starter" **some sozinho** (não fica mais infinito).
 5. O tipo escolhido aparece ao lado do nome do jogador na lista TAB: `Steve [Fogo]`
+
+> **Como funciona por dentro:** o mod substitui a lista de iniciais do Cobblemon pelos
+> nossos tipos (via API, em `CobblemonStarter`) e ouve o evento `STARTER_CHOSEN` para
+> aplicar a regra de "um tipo por jogador". Toda a interface e a entrega do Pokemon são
+> do próprio Cobblemon — por isso o aviso de inicial é tratado corretamente.
 
 ---
 

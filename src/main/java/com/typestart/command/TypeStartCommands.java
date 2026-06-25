@@ -2,13 +2,11 @@ package com.typestart.command;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.typestart.compat.CobblemonStarter;
 import com.typestart.data.StarterTypes;
 import com.typestart.data.TypeDataManager;
-import com.typestart.network.TypeStartNetwork;
+import com.typestart.util.TabName;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -67,8 +65,16 @@ public class TypeStartCommands {
             .then(CommandManager.literal("reset")
                 .then(CommandManager.literal("all")
                     .executes(ctx -> {
+                        var server = ctx.getSource().getServer();
                         TypeDataManager.resetAll();
-                        TypeDataManager.save(ctx.getSource().getServer());
+                        TypeDataManager.save(server);
+                        // Limpa a tag e os dados de inicial de todos os jogadores online
+                        // e reabre a tela de escolha.
+                        for (ServerPlayerEntity online : server.getPlayerManager().getPlayerList()) {
+                            TabName.clear(online);
+                            CobblemonStarter.resetPlayerData(online);
+                            CobblemonStarter.reprompt(online);
+                        }
                         ctx.getSource().sendFeedback(
                             () -> Text.literal("§aTodos os tipos foram resetados. Novo campeonato!"), true
                         );
@@ -93,6 +99,9 @@ public class TypeStartCommands {
 
                             TypeDataManager.resetPlayer(target.getUuidAsString());
                             TypeDataManager.save(server);
+                            TabName.clear(target);
+                            CobblemonStarter.resetPlayerData(target);
+                            CobblemonStarter.reprompt(target);
                             ctx.getSource().sendFeedback(
                                 () -> Text.literal("§aEscolha de " + nome + " foi resetada."), true
                             );
@@ -102,7 +111,7 @@ public class TypeStartCommands {
                 )
             )
 
-            // /typestart reopen <nome>  -> reabre a tela para o jogador (sem resetar)
+            // /typestart reopen <nome>  -> reseta e reabre a tela nativa
             .then(CommandManager.literal("reopen")
                 .then(CommandManager.argument("jogador", StringArgumentType.word())
                     .executes(ctx -> {
@@ -117,10 +126,12 @@ public class TypeStartCommands {
                             return 0;
                         }
 
-                        // Reseta e reabre
+                        // Reseta e reabre a tela nativa de escolha do Cobblemon.
                         TypeDataManager.resetPlayer(target.getUuidAsString());
                         TypeDataManager.save(server);
-                        ServerPlayNetworking.send(target, new TypeStartNetwork.OpenTypeScreenPayload());
+                        TabName.clear(target);
+                        CobblemonStarter.resetPlayerData(target);
+                        CobblemonStarter.reprompt(target);
 
                         ctx.getSource().sendFeedback(
                             () -> Text.literal("§aTela de escolha reaberta para " + nome + "."), true
